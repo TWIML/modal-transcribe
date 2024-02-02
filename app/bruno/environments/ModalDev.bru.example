@@ -1,0 +1,3 @@
+vars {
+  host: sbc--whisper-pod-transcriber-fastapi-app-dev.modal.run
+}

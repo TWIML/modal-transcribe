@@ -1,0 +1,11 @@
+meta {
+  name: Get Episode
+  type: http
+  seq: 4
+}
+
+get {
+  url: https://{{host}}/api/podcast/{podcast_id}/episode/{episode_number}
+  body: none
+  auth: none
+}

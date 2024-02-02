@@ -1,0 +1,11 @@
+meta {
+  name: Podcast Endpoint
+  type: http
+  seq: 2
+}
+
+get {
+  url: https://{{host}}/api/podcast/{podcast_id}
+  body: none
+  auth: none
+}
