@@ -4,8 +4,8 @@
  
   export let data;
   const episode = data.data.metadata;
-  const segments = data.data.segments;
-
+  const segments = data.data.segments || [];
+  
   // Adjust relative time thresholds
   moment.relativeTimeThreshold('d', 7); // days threshold is up to a week
   moment.relativeTimeThreshold('w', 10); // weeks threshold is up to 10 weeks
