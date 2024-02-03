@@ -20,10 +20,6 @@ from .podcast import coalesce_short_transcript_segments, the_podcast
 
 from pydantic import BaseModel
 
-class TranscriptionJob(BaseModel):
-    podcast_id: str
-    episode_number: str
-
 logger = config.get_logger(__name__)
 web_app = FastAPI()
 
@@ -33,6 +29,45 @@ MAX_JOB_AGE_SECS = 10 * 60
 # The number of episodes to return in the preview
 NUM_EPISODES_PREVIEW = 25
 
+# Print verbose logging messages
+DEBUG = True
+
+import inspect
+
+class DebugLogger:
+    def __init__(self, logger):
+        self.logger = logger
+
+    def log(self, level='info', message=None):
+        if not DEBUG:
+            return
+        
+        if message is None:
+            frame = inspect.stack()[2]
+            func_name = frame[3]
+            arg_info = inspect.getargvalues(frame[0])
+            args = [f"{arg}={arg_info.locals[arg]}" for arg in arg_info.args]
+            message = f"*** Entering function: {func_name}, args: {', '.join(args)} ***"
+
+        if level == 'info':
+            self.logger.info(message)
+        elif level == 'error':
+            self.logger.error(message)
+        elif level == 'debug':
+            self.logger.debug(message)
+        elif level == 'warning':
+            self.logger.warning(message)
+
+    def __call__(self, level='info', message=None):
+        self.log(level, message)
+
+debug_logger = DebugLogger(logger)
+
+
+class TranscriptionJob(BaseModel):
+    podcast_id: str
+    episode_number: str
+
 class InProgressJob(NamedTuple):
     job_id: str
     start_time: int
@@ -41,6 +76,7 @@ class InProgressJob(NamedTuple):
 @web_app.get("/api/podcasts")
 async def podcasts_endpoint(request: Request):
     import dataclasses
+    debug_logger()
     return [the_podcast]
 
 
@@ -63,7 +99,8 @@ async def repopulate_metadata(podcast_id: str):
     # we'd be exposed to a race condition with the NFS if we don't wait for the write
     # to propogate.
     
-    logger.info("Repopulating podcast and episode metadata")
+    debug_logger()
+
     raw_populate_podcast_metadata = populate_podcast_metadata.get_raw_f()
     loop = asyncio.get_running_loop()
     await loop.run_in_executor(
@@ -73,10 +110,15 @@ async def repopulate_metadata(podcast_id: str):
 
 @web_app.get("/api/podcast/{podcast_id}")
 async def podcast_endpoint(podcast_id: str):
+    debug_logger()
+
     previously_stored = True
 
     pod_metadata_path = get_podcast_metadata_path(podcast_id)
-    # logger.info(f"pod_metadata_path: {pod_metadata_path}")
+
+
+    debug_logger(message=f"pod_metadata_path: {pod_metadata_path}")
+
     if not pod_metadata_path.exists():
         previously_stored = False
         await repopulate_metadata(podcast_id)
@@ -95,7 +137,8 @@ async def podcast_endpoint(podcast_id: str):
     with open(ep_metadata_path, 'r') as f:
         episodes = json.load(f)
 
-    logger.info(f"Loaded {len(episodes)} episodes.")
+    debug_logger(message=f"Loaded {len(episodes)} episodes.")
+
     episodes = {k: v for k, v in sorted(episodes.items(), key=sorting_key, reverse=True)}
     
     # Refresh possibly stale data asynchronously.
@@ -107,6 +150,8 @@ async def podcast_endpoint(podcast_id: str):
 
 @web_app.get("/api/podcast/{podcast_id}/episode/{episode_number}")
 async def get_episode(podcast_id: str, episode_number: str):
+    debug_logger()
+
     # Load all episodes
     ep_metadata_path = get_episode_metadata_path(podcast_id)
     with open(ep_metadata_path, 'r') as f:
@@ -136,6 +181,7 @@ async def get_episode(podcast_id: str, episode_number: str):
 
 @web_app.post("/api/transcription_job")
 async def transcribe_job(params: TranscriptionJob):
+    debug_logger()
     now = int(time.time())
     try:
         inprogress_job = stub.in_progress[params.episode_number]
@@ -165,6 +211,8 @@ async def poll_status(call_id: str):
     from modal.call_graph import InputInfo, InputStatus
     from modal.functions import FunctionCall
 
+    debug_logger()
+    
     function_call = FunctionCall.from_id(call_id)
     graph: List[InputInfo] = function_call.get_call_graph()
 
