@@ -5,7 +5,7 @@ from tqdm import tqdm
 import sys
 from typing import List, NamedTuple, Optional
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 
 from . import config
 from .main import (
@@ -158,10 +158,11 @@ async def get_episode(podcast_id: str, episode_number: str):
         episodes = json.load(f)
 
     # Find the episode with the matching number
-    episode = episodes[episode_number]
-    
-    if episode is None:
-        return dict(error="Episode not found.")
+    try:
+        episode = episodes[episode_number]
+    except KeyError:
+        debug_logger(message=f"Episode not found.")
+        raise HTTPException(status_code=404, detail="Episode not found")
 
     episode_guid_hash = episode['guid_hash']
 
