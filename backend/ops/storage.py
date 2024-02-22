@@ -1,7 +1,7 @@
 import pathlib
 from modal import NetworkFileSystem
 
-from backend.ops import storage
+from backend import backend_root_module_directory
 
 APP_VOLUME = NetworkFileSystem.persisted("dataset-cache-vol")
 
@@ -25,14 +25,19 @@ MODEL_DIR = pathlib.Path(CACHE_DIR, "model")
 # Local file paths
 ####################
 # Location of web frontend assets.
-ASSETS_PATH = pathlib.Path(__file__).parent.parent / "frontend" / "dist"
+ASSETS_PATH = pathlib.Path(backend_root_module_directory).parent / "frontend" / "dist" #NOTE
 ####################
 
+
+####################
+# Helper path funcs
+# for modal dirs
+####################
 def get_podcast_metadata_path(podcast_id: str) -> pathlib.Path:
-    return storage.PODCAST_METADATA_DIR / podcast_id / "metadata.json"
+    return PODCAST_METADATA_DIR / podcast_id / "metadata.json"
 
 def get_episode_metadata_path(podcast_id: str) -> pathlib.Path:
-    return storage.PODCAST_METADATA_DIR / podcast_id / "episodes.json"
+    return PODCAST_METADATA_DIR / podcast_id / "episodes.json"
 
 def get_transcript_path(guid_hash: str) -> pathlib.Path:
-    return storage.TRANSCRIPTIONS_DIR / f"{guid_hash}.json"
+    return TRANSCRIPTIONS_DIR / f"{guid_hash}.json"
