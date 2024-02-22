@@ -1,10 +1,10 @@
-from backend.app.storage import APP_VOLUME, get_transcript_path, get_episode_metadata_path
-from backend.app.image import APP_IMAGE
-from backend.app.functions import stub
+from backend.ops.storage import APP_VOLUME, get_transcript_path, get_episode_metadata_path
+from backend.ops.image import APP_IMAGE
+from backend.ops.stub import stub
 from backend import config
 
-from backend.api.podcast.functions.episodes import fetch_episodes as _fetch_episodes
-from backend.src.podcast import the_podcast
+from backend.src.podcast.functions.episodes import fetch_episodes as _fetch_episodes
+from backend.src.podcast.constants import THE_PODCAST
 
 import dataclasses, json
 
@@ -17,7 +17,7 @@ def populate_podcast_metadata(podcast_id = "twiml-ai-podcast"):
     metadata_dir = config.PODCAST_METADATA_DIR / podcast_id
     metadata_dir.mkdir(parents=True, exist_ok=True)
     
-    pod_metadata = the_podcast
+    pod_metadata = THE_PODCAST
 
     pod_metadata_path = metadata_dir / "metadata.json"
     with open(pod_metadata_path, "w") as f:

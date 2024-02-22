@@ -1,0 +1,7 @@
+"""
+This directory hosts all the core functionality of the codebase, the rest of it is to make things work on & within the modal platform infrastructure and to manage the api route call handling.
+
+Everything in this directory should be designed in such a way that it can be executed independently of everything else (i.e. of spinning up a web-server and operating on modal infrastructure etc.) so that it can be executed and tested locally. This also allows the developer to iteratively develop locally (in Jupyter notebooks for example) and to work out all the logic, design the class for the particular functionality as well as any associated types, write tests for all it's methods (with mocked up input if needed) and then be able to be confident everything works within `src` regards the core logic.
+
+Each particular functionality should have it's own folder, with the class that handles all the functionality (at the time of writing there are separate functions which need to be grouped after some thought and removal of the core functionality from the api and ops code to be replaced here). Any common functionality can be placed in utils or perhaps a folder with a underscore eg. `_utils/` or `_common` etc.
+"""

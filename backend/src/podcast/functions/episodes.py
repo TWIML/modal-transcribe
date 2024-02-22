@@ -2,7 +2,7 @@ import urllib.request
 import re, hashlib
 import xml.etree.ElementTree as ET
 
-from backend.api.podcast.types import EpisodeMetadata
+from backend.src.podcast.types import EpisodeMetadata
 
 from backend import config
 logger = config.get_logger(__name__)

@@ -25,7 +25,7 @@ python3 -m modal setup     # this will open a web page allowing you to create a 
 
 4. Build the Front End
 
-cd into the frontend directory, and run:
+cd into the `frontend` directory, and run:
 
 ```
 npm install

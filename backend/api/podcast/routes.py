@@ -1,14 +1,15 @@
 import asyncio, json
 from fastapi import APIRouter, Request, HTTPException
 
-from backend.src.podcast import coalesce_short_transcript_segments, the_podcast
-from backend.api.podcast.operators import (
+from backend.src.podcast.constants import THE_PODCAST
+from backend.src.podcast.functions.segments import coalesce_short_transcript_segments
+from backend.ops.podcast.operators import (
     populate_podcast_metadata
 )
 from backend.api.utils import debug_logger
 
-from backend.api.podcast.functions.helpers import sorting_key
-from backend.app.storage import get_episode_metadata_path, get_podcast_metadata_path, get_transcript_path
+from backend.src.podcast.functions.helpers import sorting_key
+from backend.ops.storage import get_episode_metadata_path, get_podcast_metadata_path, get_transcript_path
 #########################################################################################
 
 PODCAST_ROUTER = APIRouter(
@@ -22,7 +23,7 @@ PODCAST_ROUTER = APIRouter(
 @PODCAST_ROUTER.get("/the_podcast")
 async def podcasts_endpoint(request: Request):
     import dataclasses
-    return [the_podcast]
+    return [THE_PODCAST]
 
 @PODCAST_ROUTER.post("/{podcast_id}")
 async def repopulate_metadata(podcast_id: str):

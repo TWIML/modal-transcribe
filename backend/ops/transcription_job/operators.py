@@ -1,97 +1,19 @@
-"""
-whisper-pod-transcriber uses OpenAI's Whisper modal to do speech-to-text transcription
-of podcasts.
-"""
-import dataclasses
-import datetime
 import json
 import pathlib
-import itertools
-from typing import Iterator, Tuple
 
-from modal import (
-    Dict,
-    Image,
-    Mount,
-    NetworkFileSystem,
-    Period,
-    Secret,
-    Stub,
-    asgi_app,
-)
+from backend.ops.stub import stub
+from backend.ops.image import APP_IMAGE
+from backend.ops.storage import APP_VOLUME, get_episode_metadata_path, get_podcast_metadata_path, get_transcript_path
 
-from backend.app.image import APP_IMAGE
-from backend.app.storage import APP_VOLUME, get_episode_metadata_path, get_podcast_metadata_path, get_transcript_path
+from backend.src.podcast.functions.download import store_original_audio
+from backend.src.transcription_job.functions.silences import split_silences
+
+from backend.ops.transcription_job.constants import MAX_JOB_AGE_SECS
+from backend.src.podcast.types import EpisodeMetadata
 
 from backend import config
-from backend.src import podcast
 
 logger = config.get_logger(__name__)
-
-stub = Stub(
-    "whisper-pod-transcriber",
-    image=APP_IMAGE,
-    # secrets=[Secret.from_name("podchaser")],
-)
-
-stub.in_progress = Dict.new()
-
-
-def utc_now() -> datetime.datetime:
-    return datetime.datetime.now(datetime.timezone.utc)
-
-
-
-def split_silences(
-    path: str, min_segment_length: float = 30.0, min_silence_length: float = 1.0
-) -> Iterator[Tuple[float, float]]:
-    """Split audio file into contiguous chunks using the ffmpeg `silencedetect` filter.
-    Yields tuples (start, end) of each chunk in seconds."""
-
-    import re
-
-    import ffmpeg
-
-    silence_end_re = re.compile(
-        r" silence_end: (?P<end>[0-9]+(\.?[0-9]*)) \| silence_duration: (?P<dur>[0-9]+(\.?[0-9]*))"
-    )
-
-    metadata = ffmpeg.probe(path)
-    duration = float(metadata["format"]["duration"])
-
-    reader = (
-        ffmpeg.input(str(path))
-        .filter("silencedetect", n="-10dB", d=min_silence_length)
-        .output("pipe:", format="null")
-        .run_async(pipe_stderr=True)
-    )
-
-    cur_start = 0.0
-    num_segments = 0
-
-    while True:
-        line = reader.stderr.readline().decode("utf-8")
-        if not line:
-            break
-        match = silence_end_re.search(line)
-        if match:
-            silence_end, silence_dur = match.group("end"), match.group("dur")
-            split_at = float(silence_end) - (float(silence_dur) / 2)
-
-            if (split_at - cur_start) < min_segment_length:
-                continue
-
-            yield cur_start, split_at
-            cur_start = split_at
-            num_segments += 1
-
-    # silencedetect can place the silence end *after* the end of the full audio segment.
-    # Such segments definitions are negative length and invalid.
-    if duration > cur_start and (duration - cur_start) > min_segment_length:
-        yield cur_start, duration
-        num_segments += 1
-    logger.info(f"Split {path} into {num_segments} segments")
-
 
 @stub.function(
     image=APP_IMAGE,
@@ -197,11 +119,11 @@ def process_episode(podcast_id: str, episode_number: str):
             data = data[episode_number]
             logger.info(data)
             episode = dacite.from_dict(
-                data_class=podcast.EpisodeMetadata, data=data
+                data_class=EpisodeMetadata, data=data
             )
 
         destination_path = config.RAW_AUDIO_DIR / episode.guid_hash
-        podcast.store_original_audio(
+        store_original_audio(
             url=episode.audio_download_url,
             destination=destination_path,
         )
@@ -228,7 +150,6 @@ def process_episode(podcast_id: str, episode_number: str):
 
     return episode
 
-
 ############################################################
 # NOTE: Functions being worked on in the interim as html/svelte
 # is not working properly so can't effectively refactor the rest
@@ -244,7 +165,8 @@ def process_episode(podcast_id: str, episode_number: str):
 def download_step(fixed_podcast_url): # 1st step
     # download step
     import urllib
-    from backend.src.podcast import DownloadResult, sizeof_fmt
+    from backend.src.podcast.types import DownloadResult
+    from backend.src.podcast.functions import sizeof_fmt
     request = urllib.request.Request(
         fixed_podcast_url,
         data=None,
