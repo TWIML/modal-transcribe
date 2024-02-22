@@ -1,26 +1,37 @@
+"""
+Assuming execution via. `modal serve backend.main` then this file is the entry point to the whole application
+    1. It spins up the modal resources according to what is discoverable here thus you must import all modal operators (@stub.functions etc.) here else the modal client cannot see them
+    2. Since you run `modal serve` it looks for the @asgi_app to spin up the web-server, you must mount the frontend build files here to serve the frontend. These should be in `frontend/dist` & get created upon `npm install; npx vite build --watch` in the frontend
+    3. To make all the api routes available you must import the routers for them here and then include them in the web_app instance
+"""
+import fastapi.staticfiles
 from modal import Mount, asgi_app
 
 from backend.ops.stub import stub
 from backend.ops.storage import APP_VOLUME
-from backend import config
+from backend.ops import storage
 
-# think you must import all modal operator functions here (might want to create a class that discovers them, as long as in files of same name in each api subdirectory)
-
-from backend.ops.podcast.operators import * # could also be in podcast folder you use __init__.py to import all operators into there, and then here you just import the podcast package/folder (but long term best to make them auto-discoverable)
+from backend.ops.podcast.operators import *
 from backend.ops.transcription_job.operators import *
+
+from fastapi import FastAPI
+from backend.api.podcast.routes import PODCAST_ROUTER
+from backend.api.transcription_job.routes import TRANSCRIPTION_ROUTER
+
+# NOTE: Adding routers to the web-app, may be best to make this auto-discovered eventually
+web_app = FastAPI()
+web_app.include_router(PODCAST_ROUTER)
+web_app.include_router(TRANSCRIPTION_ROUTER)
 
 
 @stub.function(
-    mounts=[Mount.from_local_dir(config.ASSETS_PATH, remote_path="/assets")],
-    network_file_systems={config.CACHE_DIR: APP_VOLUME},
+    mounts=[Mount.from_local_dir(storage.ASSETS_PATH, remote_path="/assets")],
+    network_file_systems={storage.CACHE_DIR: APP_VOLUME},
     timeout=6_000, # 100mins - NOTE: ...necessary to prevent subtask timeouts?
-    keep_warm=2,
+    keep_warm=2
 )
 @asgi_app()
 def fastapi_app():
-    import fastapi.staticfiles
-    from backend.api.main import web_app 
-    # NOTE: this import is what makes all the routes in `api` available to the modal frontend
     web_app.mount(
         "/", fastapi.staticfiles.StaticFiles(directory="/assets", html=True)
     )

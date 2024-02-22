@@ -2,10 +2,10 @@ import urllib.request
 import pathlib
 import urllib.request
 
-from backend import config
+from backend.ops import storage
 from .helpers import sizeof_fmt
 
-logger = config.get_logger(__name__)
+from backend import _utils; logger = _utils.get_logger(__name__)
 
 from ..types import DownloadResult
 

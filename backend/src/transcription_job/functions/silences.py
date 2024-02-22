@@ -1,8 +1,8 @@
 from typing import Iterator, Tuple
 
-from backend import config
+from backend.ops import storage
 
-logger = config.get_logger(__name__)
+from backend import _utils; logger = _utils.get_logger(__name__)
 
 def split_silences(
     path: str, min_segment_length: float = 30.0, min_silence_length: float = 1.0

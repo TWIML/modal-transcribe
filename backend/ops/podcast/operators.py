@@ -1,20 +1,20 @@
 from backend.ops.storage import APP_VOLUME, get_transcript_path, get_episode_metadata_path
 from backend.ops.image import APP_IMAGE
 from backend.ops.stub import stub
-from backend import config
+from backend.ops import storage
 
 from backend.src.podcast.functions.episodes import fetch_episodes as _fetch_episodes
 from backend.src.podcast.constants import THE_PODCAST
 
 import dataclasses, json
 
-logger = config.get_logger(__name__)
+from backend import _utils; logger = _utils.get_logger(__name__)
 
-@stub.function(network_file_systems={config.CACHE_DIR: APP_VOLUME})
+@stub.function(network_file_systems={storage.CACHE_DIR: APP_VOLUME})
 def populate_podcast_metadata(podcast_id = "twiml-ai-podcast"):
     logger.info(f"Updating episode metadata in the background.")
 
-    metadata_dir = config.PODCAST_METADATA_DIR / podcast_id
+    metadata_dir = storage.PODCAST_METADATA_DIR / podcast_id
     metadata_dir.mkdir(parents=True, exist_ok=True)
     
     pod_metadata = THE_PODCAST
@@ -39,7 +39,7 @@ def populate_podcast_metadata(podcast_id = "twiml-ai-podcast"):
 
 @stub.function(
     image=APP_IMAGE,
-    network_file_systems={config.CACHE_DIR: APP_VOLUME},
+    network_file_systems={storage.CACHE_DIR: APP_VOLUME},
 )
 def fetch_episodes(url: str):
     return _fetch_episodes(url=url)

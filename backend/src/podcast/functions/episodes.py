@@ -4,8 +4,8 @@ import xml.etree.ElementTree as ET
 
 from backend.src.podcast.types import EpisodeMetadata
 
-from backend import config
-logger = config.get_logger(__name__)
+from backend.ops import storage
+from backend import _utils; logger = _utils.get_logger(__name__)
 
 def fetch_episodes(url) -> dict[str, EpisodeMetadata]:
     """

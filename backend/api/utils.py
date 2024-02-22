@@ -1,5 +1,5 @@
 import inspect
-from backend import config
+from backend.ops import storage
 
 DEBUG = True
 
@@ -31,5 +31,5 @@ class DebugLogger:
     def __call__(self, level='info', message=None):
         self.log(level, message)
 
-logger = config.get_logger(__name__)
+from backend import _utils; logger = _utils.get_logger(__name__)
 debug_logger = DebugLogger(logger)

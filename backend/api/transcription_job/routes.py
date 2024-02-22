@@ -11,9 +11,9 @@ from backend.ops.stub import stub
 from backend.ops.transcription_job.operators import process_episode
 from backend.ops.transcription_job.operators import MAX_JOB_AGE_SECS
 
-from backend import config
+from backend.ops import storage
 
-logger = config.get_logger(__name__)
+from backend import _utils; logger = _utils.get_logger(__name__)
 
 #########################################################################################
 
