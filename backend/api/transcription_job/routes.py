@@ -9,7 +9,7 @@ from backend.ops.types import InProgressJob
 from backend.ops.stub import stub
 
 from backend.ops.transcription_job.operators import process_episode
-from backend.ops.transcription_job.operators import MAX_JOB_AGE_SECS
+from backend.ops.transcription_job.constants import MAX_JOB_AGE_SECS
 
 from backend.ops import storage
 
