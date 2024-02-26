@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "modal-ops-python-packages"
+version = "0.1.0"
+description = "These are the packages (and deps) we will install in our modal image"
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+whisper = "^1.1.10"
+dacite = "^1.8.1"
+jiwer = "^3.0.3"
+ffmpeg-python = "^0.2.0"
+pandas = "^2.2.1"
+loguru = "0.6.0"
+torchaudio = "2.2.1"
+pyannote-audio = "^3.1.1"
+fastapi = "0.110.0"
+pydantic = "2.6.2"
+torch = ">=2.0.0, !=2.0.1, !=2.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

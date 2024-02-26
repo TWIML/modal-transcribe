@@ -17,12 +17,21 @@ from backend.ops.transcription_job.operators import *
 from fastapi import FastAPI
 from backend.api.podcast.routes import PODCAST_ROUTER
 from backend.api.transcription_job.routes import TRANSCRIPTION_ROUTER
+from backend.api.diarised_transcribe.routes import DIARISATION_ROUTER
 
+##################
 # NOTE: Adding routers to the web-app, may be best to make this auto-discovered eventually
+# NOTE: If not added here you'll get `405 Method Not Allowed` errors which can be obtuse
+# ... so maybe want to add some custom error handling for the API routers in a common
+# api functions folder eg. `_utils/errors` etc.
 web_app = FastAPI()
 web_app.include_router(PODCAST_ROUTER)
 web_app.include_router(TRANSCRIPTION_ROUTER)
+web_app.include_router(DIARISATION_ROUTER)
+############################################
 
+
+############################################
 
 @stub.function(
     mounts=[Mount.from_local_dir(storage.ASSETS_PATH, remote_path="/assets")],

@@ -1,0 +1,19 @@
+meta {
+  name: Diarise Job
+  type: http
+  seq: 5
+}
+
+post {
+  url: https://{{host}}/api/diarise_job
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "podcast_id": "",
+    "episode_number": "",
+    "hf_access_token": ""
+  }
+}

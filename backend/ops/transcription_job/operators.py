@@ -12,6 +12,7 @@ from backend.ops.transcription_job.constants import ModelSpec
 from backend.src.podcast.types import EpisodeMetadata
 
 from backend.ops import storage
+from backend.ops.transcription_job.constants import DEFAULT_MODEL
 
 from backend import _utils; logger = _utils.get_logger(__name__)
 
@@ -107,7 +108,7 @@ def process_episode(podcast_id: str, episode_number: str):
     try:
         # pre-download the model to the cache path, because the _download fn is not
         # thread-safe.
-        model = storage.DEFAULT_MODEL
+        model = DEFAULT_MODEL
         whisper._download(whisper._MODELS[model.name], storage.MODEL_DIR, False)
 
         storage.RAW_AUDIO_DIR.mkdir(parents=True, exist_ok=True)
