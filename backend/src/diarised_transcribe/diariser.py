@@ -15,6 +15,7 @@ class PyannoteDiariser:
 
     def diarise(self, filepath: str) -> DiarisationResult:
         # Retrieve model pipeline from HF
+        print('------------------------ABOUT TO HIT THE PIPELINE------------------------------')
         pipeline = Pipeline.from_pretrained(
             'pyannote/speaker-diarization',
             use_auth_token=self.hf_access_token
@@ -54,5 +55,5 @@ class PyannoteDiariser:
                 'speaker': speaker
             })
         diarisation_dict['speakers'] = list(speakers_set)
-        
+
         return DiarisationResult(**diarisation_dict)

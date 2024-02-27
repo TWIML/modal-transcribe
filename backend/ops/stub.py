@@ -1,4 +1,5 @@
 import modal
+from typing import Dict
 
 from backend.ops.image import APP_IMAGE
 

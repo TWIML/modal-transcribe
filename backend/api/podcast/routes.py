@@ -42,20 +42,23 @@ async def repopulate_metadata(podcast_id: str):
 @PODCAST_ROUTER.get("/{podcast_id}")
 async def podcast_endpoint(podcast_id: str):
     debug_logger()
+    print("-------------------------------------------------------------------------------------------TESTING UPDATE")
     previously_stored = True
+
     pod_metadata_path = get_podcast_metadata_path(podcast_id)
     debug_logger(message=f"pod_metadata_path: {pod_metadata_path}")
-
-    if not pod_metadata_path.exists():
-        previously_stored = False
-        print("Tries to repopulate")
-        await repopulate_metadata(podcast_id)
+    # BUG: don't just check if it exists, check if it is of correct structure, not empty etc. and then if it isn't repopulate, else load it
+    #if not pod_metadata_path.exists():
+    #    previously_stored = False
+    #    print("Tries to repopulate")
+    #    await repopulate_metadata(podcast_id)
         # return dict(error="Podcast metadata not preloaded.")
+    await repopulate_metadata(podcast_id)
 
     ep_metadata_path = get_episode_metadata_path(podcast_id)
-    if not ep_metadata_path.exists():
-        previously_stored = False
-        await repopulate_metadata(podcast_id)
+    #if not ep_metadata_path.exists():
+    #    previously_stored = False
+    #    await repopulate_metadata(podcast_id)
         
     with open(pod_metadata_path, "r") as f:
         pod_metadata = json.load(f)

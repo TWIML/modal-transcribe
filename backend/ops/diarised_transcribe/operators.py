@@ -1,30 +1,52 @@
-from modal import method
+import whisper
+
+from modal import method, enter, build
 from typing import Union
 import pathlib
 
 from backend.ops.stub import stub
 from backend.ops.settings import DOWNLOADING_PROCESSOR_CONTAINER_SETTINGS
+from backend.ops.diarised_transcribe.constants import DEFAULT_MODEL
+from backend.ops.storage import MODEL_DIR, DIARISATIONS_DIR, TRANSCRIPTIONS_DIR
 
 from backend.src.diarised_transcribe.diariser import PyannoteDiariser
 from backend.src.diarised_transcribe.types import DiarisationResult
-from backend.ops.__common__.download import download_podcast_audio
+from backend.ops.__common__.downloads import download_podcast_audio as _download_podcast_audio
+
+from backend.src.diarised_transcribe.transcriber import WhisperTranscriber
 
 from backend._utils import get_logger; logger = get_logger(__name__)
 
 @stub.cls(
 **DOWNLOADING_PROCESSOR_CONTAINER_SETTINGS
 )
-class DiarisationModalOperator:
-    def __init__(self):
-        pass
+class DiariseAndTranscribeModalOperator:
+
+    @build()
+    def container_build(self):
+        print('--------------------------------------------BUILDING---------------------------------------------')
+        self.transcription_model = (
+            WhisperTranscriber \
+                .download_model_to_path(
+                    model_name=DEFAULT_MODEL.name,
+                    model_dir=MODEL_DIR,
+                    in_memory=False,
+                )
+        )
+
+    @enter()
+    def container_setup(self):
+        print('------------------------------------------------SETTING UP------------------------------------------------')
+        DIARISATIONS_DIR.mkdir(parents=True, exist_ok=True)
+        TRANSCRIPTIONS_DIR.mkdir(parents=True, exist_ok=True)
 
     @method()
-    def download(
+    def download_podcast_audio(
         self,
         podcast_id,
         episode_number  
     ):
-        audio_stored_path = download_podcast_audio(
+        audio_stored_path = _download_podcast_audio(
             podcast_id=podcast_id, 
             episode_number=episode_number
         )
@@ -40,9 +62,6 @@ class DiarisationModalOperator:
         Just executes the `src` diarisation functionality given
         the audio path
         """
-        # BUG/NOTE: I'm not sure how the imports will play
-        # out or if they will propagate downwards to the
-        # PyannoteDiariser
 
         diariser = PyannoteDiariser(hf_access_token=hf_access_token)
         filepath = audio_filepath.as_posix()
@@ -59,7 +78,7 @@ class DiarisationModalOperator:
         try:
             # download the audio
             audio_stored_path = (
-                self.download.remote(
+                self.download_podcast_audio.remote(
                     podcast_id=podcast_id,
                     episode_number=episode_number
                 )

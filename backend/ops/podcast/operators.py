@@ -4,6 +4,7 @@ from backend.ops.stub import stub
 from backend.ops import storage
 
 from backend.src.podcast.functions.episodes import fetch_episodes as _fetch_episodes
+from backend.src.podcast.types import EpisodeMetadata
 from backend.src.podcast.constants import THE_PODCAST
 
 import dataclasses, json
@@ -23,7 +24,7 @@ def populate_podcast_metadata(podcast_id = "twiml-ai-podcast"):
     with open(pod_metadata_path, "w") as f:
         json.dump(dataclasses.asdict(pod_metadata), f)
 
-    episodes = fetch_episodes.remote(
+    episodes: dict[str, EpisodeMetadata] = fetch_episodes.remote(
         url=pod_metadata.feed_url
     )
 
@@ -33,7 +34,7 @@ def populate_podcast_metadata(podcast_id = "twiml-ai-podcast"):
     ep_metadata_path = get_episode_metadata_path(podcast_id)
 
     with open(ep_metadata_path, 'w') as f:
-        json.dump({k: dataclasses.asdict(v) for k, v in episodes.items()}, f)
+        json.dump({k: v.model_dump() for k, v in episodes.items()}, f)
     
     logger.info(f"Updated metadata for {len(episodes)} episodes of podcast {pod_metadata.id}.")
 
@@ -41,5 +42,5 @@ def populate_podcast_metadata(podcast_id = "twiml-ai-podcast"):
     image=APP_IMAGE,
     network_file_systems={storage.CACHE_DIR: APP_VOLUME},
 )
-def fetch_episodes(url: str):
+def fetch_episodes(url: str) -> dict[str, EpisodeMetadata]:
     return _fetch_episodes(url=url)

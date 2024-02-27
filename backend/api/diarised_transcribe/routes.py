@@ -1,14 +1,14 @@
 import time
-from typing import List, Union
+from typing import List, Union, Tuple
 from fastapi import APIRouter, Request, BackgroundTasks, HTTPException
 
 from backend.api.utils import debug_logger
-from backend.api.diarised_transcribe.types import DiarisationJob
+from backend.api.diarised_transcribe.types import DiarisedTranscriptionJob
 
 from backend.ops.types import InProgressJob
 from backend.ops.stub import stub
 
-from backend.ops.diarised_transcribe.operators import DiarisationModalOperator
+from backend.ops.diarised_transcribe.operators import DiariseAndTranscribeModalOperator
 from backend.ops.transcription_job.constants import MAX_JOB_AGE_SECS
 
 from backend.src.diarised_transcribe.types import DiarisationResult
@@ -25,24 +25,24 @@ DIARISATION_ROUTER = APIRouter(
 
 #########################################################################################
 
-@DIARISATION_ROUTER.post("/api/diarise_job")
-async def diarise_job(params: DiarisationJob):
-    
+@DIARISATION_ROUTER.get('/api/diarised_transcribe/diarisation_step')
+async def diarisation_step(params: DiarisedTranscriptionJob) -> Union[None, Tuple[DiarisationResult, str]]:
+
     diarisation_result: Union[
         DiarisationResult,
         None
-     ] = DiarisationModalOperator.trigger_diarisation.remote(
+     ] = DiariseAndTranscribeModalOperator.trigger_diarisation.remote(
         params.podcast_id, 
         params.episode_number, 
         params.hf_access_token
     )
-
+    
     if diarisation_result:
-        result_json = diarisation_result.model_dump_json()
+        diarisation_json = diarisation_result.model_dump_json()
         logger.info(
-            result_json
+            diarisation_json
         )
-        return {'response': result_json}
+        return  diarisation_result, diarisation_json # {'response': result_json}
     else:
         raise HTTPException(
             500,
@@ -55,3 +55,12 @@ async def diarise_job(params: DiarisationJob):
             correct eg. for the Hugging Face platform
             """
         )
+
+@DIARISATION_ROUTER.post("/api/diarised_transcribe")
+async def diarised_transcribe_job(params: DiarisedTranscriptionJob):
+    response = await diarisation_step(params=params)
+    if response:
+        diarisation_result, diarisation_json = response
+        return {'response': diarisation_json}
+    
+    # NOTE: need to pass whisper model_name in for the call (do you need to init, do you need a singleton?)

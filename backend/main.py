@@ -11,6 +11,7 @@ from backend.ops.stub import stub
 from backend.ops.storage import APP_VOLUME
 from backend.ops import storage
 
+from backend.ops.diarised_transcribe.operators import *
 from backend.ops.podcast.operators import *
 from backend.ops.transcription_job.operators import *
 

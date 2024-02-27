@@ -17,6 +17,8 @@ PODCAST_METADATA_DIR = pathlib.Path(CACHE_DIR, "podcast_metadata")
 # Completed episode transcriptions. Stored as flat files with
 # files structured as '{guid_hash}-{model_slug}.json'.
 TRANSCRIPTIONS_DIR = pathlib.Path(CACHE_DIR, "transcriptions")
+# Diarisation store - intention is to store diarisations here and then use them to direct the transcriptions
+DIARISATIONS_DIR = pathlib.Path(CACHE_DIR, "diarisations")
 # Location of model checkpoint.
 MODEL_DIR = pathlib.Path(CACHE_DIR, "model")
 ####################
