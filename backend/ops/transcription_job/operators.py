@@ -119,9 +119,7 @@ def process_episode(podcast_id: str, episode_number: str):
             data = json.load(f)
             data = data[episode_number]
             logger.info(data)
-            episode = dacite.from_dict(
-                data_class=EpisodeMetadata, data=data
-            )
+            episode = EpisodeMetadata(**data)
 
         destination_path = storage.RAW_AUDIO_DIR / episode.guid_hash
         store_original_audio(

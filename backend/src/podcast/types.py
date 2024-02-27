@@ -1,8 +1,8 @@
 import dataclasses
+from pydantic import BaseModel
 from typing import Optional, NamedTuple, TypedDict
 
-@dataclasses.dataclass
-class EpisodeMetadata:
+class EpisodeMetadata(BaseModel):
     # Unique ID of podcast this episode is associated with.
     # podcast_id: Union[str, int]
     # Title of podcast this episode is associated with.

@@ -8,7 +8,7 @@ from backend.api.diarised_transcribe.types import DiarisationJob
 from backend.ops.types import InProgressJob
 from backend.ops.stub import stub
 
-from backend.ops.diarised_transcribe.operators import trigger_diarisation
+from backend.ops.diarised_transcribe.operators import DiarisationModalOperator
 from backend.ops.transcription_job.constants import MAX_JOB_AGE_SECS
 
 from backend.src.diarised_transcribe.types import DiarisationResult
@@ -31,11 +31,11 @@ async def diarise_job(params: DiarisationJob):
     diarisation_result: Union[
         DiarisationResult,
         None
-     ] = trigger_diarisation.remote(
+     ] = DiarisationModalOperator.trigger_diarisation.remote(
         params.podcast_id, 
         params.episode_number, 
         params.hf_access_token
-    ) # NOTE: Seems like the pydantic model doesn't get returned, rather the .remote does something
+    )
 
     if diarisation_result:
         result_json = diarisation_result.model_dump_json()

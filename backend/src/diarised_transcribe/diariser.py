@@ -54,4 +54,5 @@ class PyannoteDiariser:
                 'speaker': speaker
             })
         diarisation_dict['speakers'] = list(speakers_set)
+        
         return DiarisationResult(**diarisation_dict)

@@ -66,14 +66,14 @@ def fetch_episodes(url) -> dict[str, EpisodeMetadata]:
 
         episodes[episode_number] = EpisodeMetadata(
             title=title,
-            episode_number=episode_number,
-            publish_date=publish_date,
-            description=description,
-            html_description=html_description,
-            guid=guid,
+            episode_number=str(episode_number),
+            publish_date=str(publish_date),
+            description=str(description),
+            html_description=str(html_description),
+            guid=str(guid),
             guid_hash=guid_hash,
             episode_url=episode_url,
-            audio_download_url=audio_download_url
+            audio_download_url=str(audio_download_url)
         )
 
     logger.info(f"Extracted {len(episodes)} episodes.")
