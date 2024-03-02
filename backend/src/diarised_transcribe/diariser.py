@@ -1,8 +1,8 @@
 from pyannote.audio import Pipeline, Audio
-import torch
+import torch, pathlib
 
-from typing import Dict
-from backend.src.diarised_transcribe.types import DiarisationResult
+from typing import List, Dict
+from backend.src.diarised_transcribe.types import DiarisedSegmentBounds, DiarisationResult
 
 from backend._utils import get_logger
 
@@ -13,7 +13,10 @@ class PyannoteDiariser:
     def __init__(self, hf_access_token: str):
         self.hf_access_token = hf_access_token
 
-    def diarise(self, filepath: str) -> DiarisationResult:
+    def diarise(
+        self, 
+        audio_file_path: pathlib.Path
+    ) -> DiarisationResult:
         # Retrieve model pipeline from HF
         print('------------------------ABOUT TO HIT THE PIPELINE------------------------------')
         pipeline = Pipeline.from_pretrained(
@@ -30,9 +33,11 @@ class PyannoteDiariser:
         """)
         pipeline.to(torch.device(device))
 
+        # Changing filepath to string
+        audio_file_path_str = audio_file_path.as_posix()
         # Load the audio file and downmix and downsample it
         io = Audio(mono='downmix', sample_rate=16000)
-        waveform, sample_rate = io(filepath)
+        waveform, sample_rate = io(audio_file_path_str)
 
         # Put it through the pipeline to diarise
         diarisation = pipeline({
@@ -46,14 +51,14 @@ class PyannoteDiariser:
             'segments': []
         }
         speakers_set = set()
-
         for segment, label, speaker in diarisation.itertracks(yield_label=True):
             speakers_set.add(speaker)
-            diarisation_dict['segments'].append({
-                'start': segment.start,
-                'end': segment.end,
-                'speaker': speaker
-            })
+            dseg = DiarisedSegmentBounds(
+                start=segment.start,
+                end=segment.end,
+                speaker=speaker
+            )
+            diarisation_dict['segments'].append(dseg)
         diarisation_dict['speakers'] = list(speakers_set)
 
         return DiarisationResult(**diarisation_dict)

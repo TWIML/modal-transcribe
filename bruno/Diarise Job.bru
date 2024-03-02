@@ -5,15 +5,15 @@ meta {
 }
 
 post {
-  url: https://{{host}}/api/diarise_job
+  url: https://{{host}}/api/diarised_transcribe
   body: json
   auth: none
 }
 
 body:json {
   {
-    "podcast_id": "",
-    "episode_number": "",
-    "hf_access_token": ""
+    "podcast_id": "{{podcast_id}}",
+    "episode_number": "673",
+    "hf_access_token": "{{hf_access_token}}"
   }
 }
