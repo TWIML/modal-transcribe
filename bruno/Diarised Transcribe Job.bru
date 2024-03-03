@@ -1,5 +1,5 @@
 meta {
-  name: Diarise Job
+  name: Diarised Transcribe Job
   type: http
   seq: 5
 }
@@ -14,6 +14,9 @@ body:json {
   {
     "podcast_id": "{{podcast_id}}",
     "episode_number": "673",
-    "hf_access_token": "{{hf_access_token}}"
+    "hf_access_token": "{{hf_access_token}}",
+    "overwrite_download": false,
+    "overwrite_diarisation": false,
+    "overwrite_transcription": false
   }
 }

@@ -8,13 +8,13 @@ import pathlib
 from backend.ops.stub import stub
 from backend.ops.settings import DOWNLOADING_PROCESSOR_CONTAINER_SETTINGS
 from backend.ops.diarised_transcribe.constants import DEFAULT_MODEL
-from backend.ops.storage import MODEL_DIR, DIARISATIONS_DIR, TRANSCRIPTIONS_DIR, RAW_AUDIO_DIR
+from backend.ops.storage import MODEL_DIR, DIARISATIONS_DIR, TRANSCRIPTIONS_DIR, RAW_AUDIO_DIR, get_audio_path, get_diarisation_path, get_transcript_path
 
 from backend.src.podcast.types import EpisodeMetadata
 from backend.ops.__common__.episodes import get_episode_metadata # Should be in src
 
 from backend.src.diarised_transcribe.diariser import PyannoteDiariser
-from backend.src.diarised_transcribe.types import DiarisedSegmentBounds, DiarisationResult, TranscriptionResult, CompletedTranscriptObject
+from backend.src.diarised_transcribe.types import DiarisedSegmentBounds, DiarisationResult, TranscriptionResult, TranscriptionDataClassReformer, FinalTranscriptionObject
 from backend.ops.__common__.downloads import download_podcast_audio as _download_podcast_audio
 
 from backend.src.diarised_transcribe.transcriber import WhisperTranscriber
@@ -54,16 +54,25 @@ class DiariseAndTranscribeModalOperator:
     @method()
     def download_podcast_audio(
         self,
-        podcast_id,
-        episode_number  
+        podcast_id: str,
+        episode_number: str,
+        audio_store_path: pathlib.Path,
+        overwrite_download: bool
     ) -> pathlib.Path:
         """
         Stores the audio at given path and returns path.
         """
-        audio_stored_path = _download_podcast_audio(
-            podcast_id=podcast_id, 
-            episode_number=episode_number
-        )
+        if (
+            (not audio_store_path.exists()) 
+            or overwrite_download
+        ): # download whenever path not there, or if path there but overwrite specified
+            audio_stored_path = _download_podcast_audio(
+                podcast_id=podcast_id, 
+                episode_number=episode_number,
+                overwrite_download=overwrite_download
+            )
+        else:
+            audio_stored_path = audio_store_path
         return audio_stored_path
 
     @method()
@@ -91,7 +100,8 @@ class DiariseAndTranscribeModalOperator:
         episode_number: str, 
         hf_access_token: str,
         audio_stored_path: pathlib.Path,
-        diarisation_store_path: pathlib.Path
+        diarisation_store_path: pathlib.Path,
+        overwrite_diarisation: bool
     ) -> Optional[DiarisationResult]:
         '''
         Triggers the end-to-end diarisation process by
@@ -103,7 +113,10 @@ class DiariseAndTranscribeModalOperator:
         json to the data structure.
         '''
         try:
-            if not diarisation_store_path.exists():
+            if (
+                (not diarisation_store_path.exists())
+                or overwrite_diarisation
+            ): # if doesn't exist already run, if does but overwrite is specified then run as well
                 # trigger the diarisation
                 diarisation_result: DiarisationResult = (
                     self.diarise_episode.remote( # NOTE: spawn happens in the background, may be best to use that instead
@@ -126,7 +139,7 @@ class DiariseAndTranscribeModalOperator:
 
         except Exception as e:
             diarisation_result = None # type: ignore
-            logger.warning(f"""
+            logger.warn(f"""
                 Failed to diarise the audio see the exception:
                         {e}
             """)
@@ -163,8 +176,10 @@ class DiariseAndTranscribeModalOperator:
     def trigger_transcription(
         self,
         diarised_segments: List[DiarisedSegmentBounds],
-        audio_file_path: pathlib.Path
-    ) -> List[TranscriptionResult]:
+        audio_file_path: pathlib.Path,
+        transcription_store_path: pathlib.Path,
+        overwrite_transcription: bool
+    ) -> Optional[FinalTranscriptionObject]:
         '''
         Distributes the transcription job across all diarised
         segments and returns the collected results
@@ -175,26 +190,55 @@ class DiariseAndTranscribeModalOperator:
         (start and end time of a speaker's segment) - these are
         then transcribed and collected into an iterable and returned.
         '''
-        diarised_transcriptions = list(
-            self.transcribe_segment.map(
-                diarised_segments, 
-                kwargs=dict(
-                    audio_file_path=audio_file_path
-                ),
-                return_exceptions=True # NOTE:doesn't fail on errors
-            )
-        )
-        for _ in diarised_transcriptions:
-            print(_)
-        return diarised_transcriptions
+        try:
+            if (
+                (not transcription_store_path.exists())
+                or overwrite_transcription
+            ): # execute when path not there or if there but overwrite specified
+                transcribed_segments = list(
+                    self.transcribe_segment.map(
+                        diarised_segments, 
+                        kwargs=dict(
+                            audio_file_path=audio_file_path
+                        ),
+                        return_exceptions=True # NOTE:doesn't fail on errors
+                ))
+                transcription_result: FinalTranscriptionObject = TranscriptionDataClassReformer(
+                    items=transcribed_segments
+                ).reform()
+                for _ in transcribed_segments:
+                    print(_)
+                with open(transcription_store_path, "w") as f:
+                    f.write(
+                        transcription_result.model_dump_json()
+                    )
+                logger.info(f"**Wrote transcription to {transcription_store_path}** \n\t ... transcription output -> {transcription_result.model_dump_json()}")
+            else: # load from disk
+                with open(transcription_store_path, "r") as f:
+                    transcription_dict = json.load(f)
+                    transcription_result = FinalTranscriptionObject(
+                        **transcription_dict
+                    )
+                    logger.info(f"**Transcription already existed, loaded transcription from {transcription_store_path}**")
+        except Exception as e:
+            transcription_result = None # type: ignore
+            logger.warn(f"""
+                Transcription failed with error: 
+                        {e}
+            """)
+            
+        return transcription_result
     
     @method()
     def trigger_process(
         self, 
         podcast_id: str, 
         episode_number: str, 
-        hf_access_token: str
-    ) -> Optional[CompletedTranscriptObject]:
+        hf_access_token: str,
+        overwrite_download: bool,
+        overwrite_diarisation: bool,
+        overwrite_transcription: bool
+    ) -> Optional[FinalTranscriptionObject]:
         '''
         Triggers the end to end diarisation &
         transcription process
@@ -206,35 +250,36 @@ class DiariseAndTranscribeModalOperator:
             podcast_id=podcast_id,
             episode_number=episode_number
         )
-        diarisation_store_path = DIARISATIONS_DIR /episode.guid_hash
-        # download the audio & return path
-        audio_store_path = RAW_AUDIO_DIR / episode.guid_hash
-        if not audio_store_path.exists():
-            audio_stored_path = self.download_podcast_audio.remote(
-                podcast_id=podcast_id,
-                episode_number=episode_number
-            )
-        else:
-            audio_stored_path = audio_store_path
+        audio_store_path = get_audio_path(episode.guid_hash)
+        diarisation_store_path = get_diarisation_path(episode.guid_hash)
+        transcription_store_path = get_transcript_path(episode.guid_hash)
+        ############################################
+        self.download_podcast_audio.remote(
+            podcast_id=podcast_id,
+            episode_number=episode_number,
+            audio_store_path=audio_store_path,
+            overwrite_download=overwrite_download
+        )
         ############################################
         diarisation_result = self.trigger_diarisation.remote(
             podcast_id=podcast_id,
             episode_number=episode_number,
             hf_access_token=hf_access_token,
-            audio_stored_path=audio_stored_path,
-            diarisation_store_path=diarisation_store_path
+            audio_stored_path=audio_store_path,
+            diarisation_store_path=diarisation_store_path,
+            overwrite_diarisation=overwrite_diarisation
         )
+        ############################################
         if diarisation_result:
             diarised_segments=diarisation_result.segments
-            transcription_results: List[TranscriptionResult] = self.trigger_transcription.remote(
+            final_transcription: FinalTranscriptionObject = self.trigger_transcription.remote(
                 diarised_segments=diarised_segments,
-                audio_file_path=audio_stored_path
-            )
-            diarised_transcriptions = CompletedTranscriptObject(
-                items=transcription_results
+                audio_file_path=audio_store_path,
+                transcription_store_path=transcription_store_path,
+                overwrite_transcription=overwrite_transcription
             )
         else:
-            diarised_transcriptions = None
+            final_transcription = None # type: ignore
             # Must have been failure during diarise
             # should we raise an exception there
             # instead
@@ -242,4 +287,4 @@ class DiariseAndTranscribeModalOperator:
                 Failed to diarise the audio
             """)
         
-        return diarised_transcriptions
+        return final_transcription

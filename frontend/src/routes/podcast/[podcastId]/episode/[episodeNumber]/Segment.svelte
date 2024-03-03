@@ -24,6 +24,7 @@
 
 <li class="pb-3 sm:pb-4 py-2 border-b border-gray-200 w-full rounded-t-lg flex items-center space-x-4" key={idx}>
   <div class="flex-1 min-w-0">
+    <p class="text-gray-500">{segment.speaker}</p>
     <p class="text-gray-500">{segment.text}</p>
   </div>
   <div class="sm:inline-flex sm:flex-row items-center text-xs bg-gray-100 text-gray-900 dark:text-white">

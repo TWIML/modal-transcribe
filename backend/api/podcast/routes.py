@@ -103,5 +103,9 @@ async def get_episode(podcast_id: str, episode_number: str):
 
     return dict(
         metadata=episode,
-        segments=coalesce_short_transcript_segments(data["segments"]),
+        segments=data['segments']
     )
+    # dict(
+    #     metadata=episode,
+    #     segments=coalesce_short_transcript_segments(data["segments"]),
+    # )

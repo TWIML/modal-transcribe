@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from dataclasses import dataclass
 from typing import List, Dict, Literal, Union
 
 class DiarisedSegmentBounds(BaseModel):
@@ -10,7 +11,7 @@ class DiarisationResult(BaseModel):
     speakers: List[str]
     segments: List[DiarisedSegmentBounds]
 
-'''
+''' # eg. outputs from whisper
 {
     'text': ' developing in since like', 
     'segments': 
@@ -25,6 +26,35 @@ class DiarisationResult(BaseModel):
                 'temperature': 0.0, 
                 'avg_logprob': -0.6109485626220703, 'compression_ratio': 0.75, 
                 'no_speech_prob': 0.4606165587902069
+            }
+        ], 
+    'language': 'en'
+}
+
+{
+    'text': " riff on how the year felt as an RL researcher. Yeah, that's a very...", 
+    'segments': 
+        [
+            {
+                'id': 0, 
+                'seek': 0, 
+                'start': 0.0, 
+                'end': 3.6, 
+                'text': ' riff on how the year felt as an RL researcher.', 'tokens': [50363, 36738, 319, 703, 262, 614, 2936, 355, 281, 45715, 13453, 13, 50543], 
+                'temperature': 0.0, 
+                'avg_logprob': -0.5380323658818784, 
+                'compression_ratio': 0.9583333333333334, 'no_speech_prob': 0.08405435085296631
+            }, 
+            {
+                'id': 1, 
+                'seek': 0, 
+                'start': 3.6, 
+                'end': 4.16, 
+                'text': " Yeah, that's a very...", 
+                'tokens': [50543, 9425, 11, 326, 338, 257, 845, 986, 50571], 'temperature': 0.0, 
+                'avg_logprob': -0.5380323658818784, 
+                'compression_ratio': 0.9583333333333334, 
+                'no_speech_prob': 0.08405435085296631
             }
         ], 
     'language': 'en'}
@@ -48,5 +78,40 @@ class TranscriptionResult(BaseModel):
     language: str
     speaker: str
 
-class CompletedTranscriptObject(BaseModel):
+###############################################
+# Below, building data-structs for our ui, above are
+# forms returned from the models (pyannote, whisper)
+###############################################
+class FinalSegmentObject(BaseModel):
+    start: float
+    end: float
+    text: str
+    speaker: str
+
+class FinalTranscriptionObject(BaseModel):
+    text: str
+    segments: List[FinalSegmentObject]
+
+@dataclass
+class TranscriptionDataClassReformer:
     items: List[TranscriptionResult]
+
+    def reform(self) -> FinalTranscriptionObject:
+        total_text = "" # not used on frontend
+        __segments = [] # main data-struct
+        for tr in self.items:
+            total_text += tr.text
+            first_start = tr.segments[0].start
+            last_end = tr.segments[-1].end
+            __segments.append(
+                FinalSegmentObject(
+                    start=first_start,
+                    end=last_end,
+                    text=tr.text,
+                    speaker=tr.speaker
+                )
+            )
+        return FinalTranscriptionObject(
+            text=total_text,
+            segments=__segments
+        )

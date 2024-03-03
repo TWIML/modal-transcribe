@@ -6,7 +6,11 @@ from backend.src.podcast.functions.download import store_original_audio
 
 from backend._utils import get_logger; logger = get_logger(__name__)
 
-def download_podcast_audio(podcast_id: str, episode_number: str) -> pathlib.Path:
+def download_podcast_audio(
+    podcast_id: str, 
+    episode_number: str,
+    overwrite_download: bool
+) -> pathlib.Path:
     """
     Given an episode number and podcast id download the
     audio of it to modal storage location
@@ -18,5 +22,6 @@ def download_podcast_audio(podcast_id: str, episode_number: str) -> pathlib.Path
     store_original_audio(
         url=episode.audio_download_url,
         destination=audio_store_path,
+        overwrite=overwrite_download
     )
     return audio_store_path

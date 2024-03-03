@@ -43,3 +43,9 @@ def get_episode_metadata_path(podcast_id: str) -> pathlib.Path:
 
 def get_transcript_path(guid_hash: str) -> pathlib.Path:
     return TRANSCRIPTIONS_DIR / f"{guid_hash}.json"
+
+def get_diarisation_path(guid_hash: str) -> pathlib.Path:
+    return DIARISATIONS_DIR / f"{guid_hash}.json"
+
+def get_audio_path(guid_hash: str) -> pathlib.Path:
+    return RAW_AUDIO_DIR / f"{guid_hash}"
