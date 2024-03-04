@@ -101,6 +101,11 @@ class TranscriptionDataClassReformer:
         __segments = [] # main data-struct
         for tr in self.items:
             total_text += tr.text
+    
+            # TODO: implement speaker coalescing
+            # if speaker on this iteration same
+            # as last one then don't append but
+            # accumulate their data, else append
             first_start = tr.segments[0].start
             last_end = tr.segments[-1].end
             __segments.append(

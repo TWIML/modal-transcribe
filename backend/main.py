@@ -13,12 +13,10 @@ from backend.ops import storage
 
 from backend.ops.diarised_transcribe.operators import *
 from backend.ops.podcast.operators import *
-from backend.ops.transcription_job.operators import *
 
 from fastapi import FastAPI
 from backend.api.podcast.routes import PODCAST_ROUTER
-from backend.api.transcription_job.routes import TRANSCRIPTION_ROUTER
-from backend.api.diarised_transcribe.routes import DIARISATION_ROUTER
+from backend.api.diarised_transcribe.routes import DIARISED_TRANSCRIBE_ROUTER
 
 ##################
 # NOTE: Adding routers to the web-app, may be best to make this auto-discovered eventually
@@ -27,8 +25,7 @@ from backend.api.diarised_transcribe.routes import DIARISATION_ROUTER
 # api functions folder eg. `_utils/errors` etc.
 web_app = FastAPI()
 web_app.include_router(PODCAST_ROUTER)
-web_app.include_router(TRANSCRIPTION_ROUTER)
-web_app.include_router(DIARISATION_ROUTER)
+web_app.include_router(DIARISED_TRANSCRIBE_ROUTER)
 ############################################
 
 

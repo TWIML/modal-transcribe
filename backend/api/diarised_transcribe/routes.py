@@ -11,13 +11,13 @@ from backend import _utils; logger = _utils.get_logger(__name__)
 
 #########################################################################################
 
-DIARISATION_ROUTER = APIRouter(
+DIARISED_TRANSCRIBE_ROUTER = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
 #########################################################################################
 
-@DIARISATION_ROUTER.post("/api/diarised_transcribe")
+@DIARISED_TRANSCRIBE_ROUTER.post("/api/diarised_transcribe")
 async def diarised_transcribe_job(params: DiarisedTranscriptionJob):
     final_transcription: FinalTranscriptionObject = DiariseAndTranscribeModalOperator \
     .trigger_process.remote(
