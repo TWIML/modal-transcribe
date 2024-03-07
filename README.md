@@ -25,7 +25,7 @@ python3 -m modal setup     # this will open a web page allowing you to create a 
 
 4. Build the Front End
 
-cd into the app/frontend directory, and run:
+cd into the `frontend` directory, and run:
 
 ```
 npm install
@@ -39,7 +39,7 @@ The last command will start a watcher process that will rebuild your static fron
 Once you have vite build running, in a separate shell run this to start an ephemeral/dev app on Modal:
 
 ```
-modal serve app.main
+modal serve backend.main
 ```
 
 The modal app will print two URLs in its shell window. Open the one that looks like this to access the front end:

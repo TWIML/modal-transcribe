@@ -1,0 +1,22 @@
+meta {
+  name: Diarised Transcribe Job
+  type: http
+  seq: 5
+}
+
+post {
+  url: https://{{host}}/api/diarised_transcribe
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "podcast_id": "{{podcast_id}}",
+    "episode_number": "671",
+    "hf_access_token": "{{hf_access_token}}",
+    "overwrite_download": false,
+    "overwrite_diarisation": false,
+    "overwrite_transcription": false
+  }
+}

@@ -1,3 +1,4 @@
 **/__pycache__
-app/frontend/dist/*
-.DS_Store
+**/.venv
+**/frontend/dist/*
+**/.DS_Store
