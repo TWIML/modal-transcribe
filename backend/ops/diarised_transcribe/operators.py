@@ -1,4 +1,3 @@
-import whisper
 import json
 
 from modal import method, enter, build
