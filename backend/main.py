@@ -13,6 +13,7 @@ from backend.ops.storage import APP_VOLUME
 from backend.ops.image import APP_IMAGE
 from backend.ops import storage
 
+# DISCOVERS MODAL FUNCTIONALITY FROM HERE
 from backend.ops.diarised_transcribe.operators import *
 from backend.ops.podcast.operators import *
 
@@ -36,12 +37,18 @@ web_app.include_router(DIARISED_TRANSCRIBE_ROUTER)
 
 
 @stub.function(
-    mounts=[Mount.from_local_dir(storage.ASSETS_PATH, remote_path="/assets")],
+    mounts=[Mount.from_local_dir(
+        storage.ASSETS_PATH, # local `frontend/dist` path - compiled frontend code
+        remote_path="/assets" # modal `/assets` path
+    )],
     network_file_systems={storage.CACHE_DIR: APP_VOLUME},
     timeout=6_000,  # 100mins - NOTE: ...necessary to prevent subtask timeouts?
     keep_warm=2,
 )
 @asgi_app()
 def fastapi_app():
-    web_app.mount("/", fastapi.staticfiles.StaticFiles(directory="/assets", html=True))
+    web_app.mount(
+        "/", # root url on website
+        fastapi.staticfiles.StaticFiles(directory="/assets", html=True) # modal `/assets` path
+    )
     return web_app

@@ -41,7 +41,7 @@ class DiariseAndTranscribeModalOperator:
                     model_dir=self.model_dir,
                     in_memory=False,
                 )
-        )
+        ) # NOTE: check if model is already in path and only then download
 
     @enter()
     def container_setup(self):
