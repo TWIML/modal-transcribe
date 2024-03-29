@@ -1,5 +1,6 @@
 import asyncio, json
 from fastapi import APIRouter, Request, HTTPException
+from typing import Optional
 
 from backend.src.podcast.constants import THE_PODCAST
 from backend.src.podcast.functions.segments import coalesce_short_transcript_segments
@@ -20,7 +21,7 @@ PODCAST_ROUTER = APIRouter(
 
 #########################################################################################
 
-@PODCAST_ROUTER.get("/the_podcast")
+@PODCAST_ROUTER.get("/{podcast_id}")
 async def podcasts_endpoint(request: Request):
     import dataclasses
     return [THE_PODCAST]
@@ -39,8 +40,8 @@ async def repopulate_metadata(podcast_id: str):
         None, raw_populate_podcast_metadata, podcast_id
     )
 
-@PODCAST_ROUTER.get("/{podcast_id}")
-async def podcast_endpoint(podcast_id: str):
+@PODCAST_ROUTER.get("/{podcast_id}/episodes")
+async def podcast_endpoint(podcast_id: str, page: Optional[int] = None, per_page: Optional[int] = None):
     debug_logger()
     print("-------------------------------------------------------------------------------------------TESTING UPDATE")
     previously_stored = True
@@ -48,17 +49,17 @@ async def podcast_endpoint(podcast_id: str):
     pod_metadata_path = get_podcast_metadata_path(podcast_id)
     debug_logger(message=f"pod_metadata_path: {pod_metadata_path}")
     # BUG: don't just check if it exists, check if it is of correct structure, not empty etc. and then if it isn't repopulate, else load it
-    #if not pod_metadata_path.exists():
-    #    previously_stored = False
+    if not pod_metadata_path.exists():
+       previously_stored = False
     #    print("Tries to repopulate")
-    #    await repopulate_metadata(podcast_id)
+       await repopulate_metadata(podcast_id)
         # return dict(error="Podcast metadata not preloaded.")
-    await repopulate_metadata(podcast_id)
+    # await repopulate_metadata(podcast_id)
 
     ep_metadata_path = get_episode_metadata_path(podcast_id)
-    #if not ep_metadata_path.exists():
-    #    previously_stored = False
-    #    await repopulate_metadata(podcast_id)
+    if not ep_metadata_path.exists():
+       previously_stored = False
+       await repopulate_metadata(podcast_id)
         
     with open(pod_metadata_path, "r") as f:
         pod_metadata = json.load(f)
@@ -72,6 +73,14 @@ async def podcast_endpoint(podcast_id: str):
     # Refresh possibly stale data asynchronously.
     if previously_stored:
         populate_podcast_metadata.spawn(podcast_id)
+
+    # episodes = list(episodes.values())
+
+    # Apply paging
+    # if page and per_page:
+    #     start = (page - 1) * per_page
+    #     end = start + per_page
+    #     episodes = epi[start:end]
 
     return dict(pod_metadata=pod_metadata, episodes=episodes)
 

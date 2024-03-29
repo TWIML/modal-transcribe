@@ -41,6 +41,8 @@ class PodcastMetadata:
     web_url: str
     # Feed url
     feed_url: str
+    # Image url
+    image_url: Optional[str] = None
     # Used to detect non-English podcasts.
     language: Optional[str] = None
 

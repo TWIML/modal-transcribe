@@ -8,7 +8,7 @@ export default defineConfig({
 	server: {
 		proxy: {
 			'/api': {
-				target: 'https://vshlemon--whisper-pod-transcriber-fastapi-app-dev.modal.run',
+				target: 'https://sbc--whisper-pod-transcriber-fastapi-app-dev.modal.run',
 				changeOrigin: true,
 				secure: false,
 				// rewrite: (path) => path.replace(/^\/api/, '')

@@ -1,3 +1,4 @@
+import os
 from pyannote.audio import Pipeline, Audio
 import torch, pathlib
 
@@ -10,9 +11,6 @@ logger = get_logger(__name__)
 
 class PyannoteDiariser:
 
-    def __init__(self, hf_access_token: str):
-        self.hf_access_token = hf_access_token
-
     def diarise(
         self, 
         audio_file_path: pathlib.Path
@@ -21,7 +19,7 @@ class PyannoteDiariser:
         print('------------------------ABOUT TO HIT THE PIPELINE------------------------------')
         pipeline = Pipeline.from_pretrained(
             'pyannote/speaker-diarization',
-            use_auth_token=self.hf_access_token
+            use_auth_token=os.environ['HUGGING_FACE_API_KEY']
         )
 
         # Run on Cuda device if available
