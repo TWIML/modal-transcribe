@@ -3,7 +3,7 @@ from modal import NetworkFileSystem
 
 from backend import backend_root_module_directory
 
-APP_VOLUME = NetworkFileSystem.persisted("dataset-cache-vol")
+APP_VOLUME = NetworkFileSystem.from_name("dataset-cache-vol")
 
 ####################
 # Modal file paths

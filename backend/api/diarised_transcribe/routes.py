@@ -22,8 +22,7 @@ async def diarised_transcribe_job(params: DiarisedTranscriptionJob):
     final_transcription: FinalTranscriptionObject = DiariseAndTranscribeModalOperator \
     .trigger_process.remote(
         params.podcast_id, 
-        params.episode_number, 
-        params.hf_access_token,
+        params.episode_number,
         params.overwrite_download,
         params.overwrite_diarisation,
         params.overwrite_transcription

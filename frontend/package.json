@@ -40,6 +40,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"flowbite-svelte-icons": "^1.5.0",
 		"vite": "^5.0.10"
 	}
 }
