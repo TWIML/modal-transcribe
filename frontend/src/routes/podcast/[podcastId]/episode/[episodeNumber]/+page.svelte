@@ -1,10 +1,15 @@
 <script>
   import moment from 'moment';
-	import Transcript from './Transcript.svelte';
- 
+	import Transcript from '$lib/components/Transcript.svelte';
+  import { Button } from 'flowbite-svelte';
+  import { HeadphonesSolid, FilePenSolid } from 'flowbite-svelte-icons';
+  import { updatePodData, podcastMetadata, podcastEpisodes, fetchMetadata } from '$lib/podcastStores';
+  import { POD_API_TRANSCRIBE_URL } from '$lib/constants.js';
+  import { onMount } from 'svelte';
+
   export let data;
   const episode = data.data.metadata;
-  const segments = data.data.segments || [];
+  export let segments = data.data.segments || [];
   
   // Adjust relative time thresholds
   moment.relativeTimeThreshold('d', 7); // days threshold is up to a week
@@ -14,22 +19,57 @@
     const date = moment(dateString);
     return date.format('LL');
   }
+
+  async function postTranscribe(ep_no) {
+    const payload =   {
+      "podcast_id": $podcastMetadata.id,
+      "episode_number": ep_no,
+      "overwrite_download": false,
+      "overwrite_diarisation": false,
+      "overwrite_transcription": false
+    };
+
+    try {
+      const res = await fetch(POD_API_TRANSCRIBE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      segments = res.data; // Update segments with the response data
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  onMount(async () => {
+    await updatePodData();
+  })
+  
+  // function to check if there are transcript segments
+  $: hasTranscript = segments && segments.length > 0;
 </script>
 
 <div class="w-full">
-  <div class="mx-auto max-w-4xl mt-4 py-8 rounded overflow-hidden shadow-lg">
-      <div class="px-6 py-4">
-        <div class="text-xl pb-3 font-medium text-black">{episode.title}</div>
-        <p class="pb-2 text-gray-500">Episode Number: {episode.episode_number}</p>
-        <p class="pb-2 text-gray-500">Publish Date: {formatDate(episode.publish_date)}</p>
-        <p class="pb-2 text-gray-500">Description: {episode.html_description}</p>
-        <a href="{episode.episode_url}" class="text-blue-500">Listen to Episode</a>
-      </div>
+  <div class="pb-8">
+    <h1 class="text-xl pb-3 font-medium text-black"><span class="text-gray-400">{episode.episode_number} | </span>{episode.title}</h1>
+    <p class="pb-2 text-gray-400">{formatDate(episode.publish_date)}</p>
+    <p class="pb-2 text-gray-800">{episode.html_description}</p>
   </div>
-  <div class="mx-auto max-w-4xl mt-4 py-8 rounded overflow-hidden shadow-lg">
-    <div class="px-6 py-4">
-      <div class="text-xl pb-3 font-medium text-black">Transcript</div>
+  <div class="pb-8">
+    
+    <Button color="dark" pill on:click={() => postTranscribe(episode.episode_number)} disabled={hasTranscript}>
+      <FilePenSolid class="w-3.5 h-3.5 me-2" /> Transcribe
+    </Button>
+
+    <Button color="dark" pill href="{episode.episode_url}">
+      <HeadphonesSolid class="w-3.5 h-3.5 me-2" /> Listen
+    </Button>
+  </div>
+  <div class="pb-8">
+    {#if hasTranscript}
       <Transcript {segments}/>
-    </div>
+    {/if}
   </div>
 </div>

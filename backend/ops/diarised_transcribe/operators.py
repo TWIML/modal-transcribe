@@ -77,8 +77,7 @@ class DiariseAndTranscribeModalOperator:
     @method()
     def diarise_episode(
         self,
-        audio_file_path: pathlib.Path,
-        hf_access_token: str
+        audio_file_path: pathlib.Path
     ) -> DiarisationResult:
         """
         Executes `src` diarisation functionality given
@@ -86,7 +85,7 @@ class DiariseAndTranscribeModalOperator:
         segments.
         """
         print('------------------IN DIARISE EPISODE-------------------------------')
-        diariser = PyannoteDiariser(hf_access_token=hf_access_token)
+        diariser = PyannoteDiariser()
         diarisation_result = diariser.diarise(
             audio_file_path=audio_file_path
         )
@@ -97,7 +96,6 @@ class DiariseAndTranscribeModalOperator:
         self,
         podcast_id: str, 
         episode_number: str, 
-        hf_access_token: str,
         audio_stored_path: pathlib.Path,
         diarisation_store_path: pathlib.Path,
         overwrite_diarisation: bool
@@ -119,8 +117,7 @@ class DiariseAndTranscribeModalOperator:
                 # trigger the diarisation
                 diarisation_result: DiarisationResult = (
                     self.diarise_episode.remote( # NOTE: spawn happens in the background, may be best to use that instead
-                        audio_file_path=audio_stored_path,
-                        hf_access_token=hf_access_token
+                        audio_file_path=audio_stored_path
                     ) # NOTE: job takes too long > 5 mins, even on cuda/gpu
                 )
                 with open(diarisation_store_path, "w") as f:
@@ -232,8 +229,7 @@ class DiariseAndTranscribeModalOperator:
     def trigger_process(
         self, 
         podcast_id: str, 
-        episode_number: str, 
-        hf_access_token: str,
+        episode_number: str,
         overwrite_download: bool,
         overwrite_diarisation: bool,
         overwrite_transcription: bool
@@ -263,7 +259,6 @@ class DiariseAndTranscribeModalOperator:
         diarisation_result = self.trigger_diarisation.remote(
             podcast_id=podcast_id,
             episode_number=episode_number,
-            hf_access_token=hf_access_token,
             audio_stored_path=audio_store_path,
             diarisation_store_path=diarisation_store_path,
             overwrite_diarisation=overwrite_diarisation
