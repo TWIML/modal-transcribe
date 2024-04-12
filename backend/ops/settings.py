@@ -13,13 +13,14 @@ class ContainerSettingsType(TypedDict):
     image: Image # APP_IMAGE,
     network_file_systems: dict # {CACHE_DIR: APP_VOLUME},
     timeout: int # 900
-
-SECRETS_NAME = "twiml-rag"
+    secrets: list[modal.Secret]
 
 DOWNLOADING_PROCESSOR_CONTAINER_SETTINGS = ContainerSettingsType(
     gpu='any',
     image=APP_IMAGE,
     network_file_systems={CACHE_DIR:APP_VOLUME},
     timeout=900,
-    secrets=[modal.Secret.from_name(SECRETS_NAME)]
+    secrets=[
+        modal.Secret.from_name('HUGGING_FACE_ACCESS_TOKEN')
+    ]
 )

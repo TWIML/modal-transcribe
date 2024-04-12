@@ -1,4 +1,5 @@
 import json
+import os
 
 from modal import method, enter, build
 from typing import Union, List, Optional, Tuple
@@ -85,7 +86,9 @@ class DiariseAndTranscribeModalOperator:
         segments.
         """
         print('------------------IN DIARISE EPISODE-------------------------------')
-        diariser = PyannoteDiariser()
+        diariser = PyannoteDiariser(
+            hf_access_token=os.environ["HUGGING_FACE_ACCESS_TOKEN"]
+        )
         diarisation_result = diariser.diarise(
             audio_file_path=audio_file_path
         )

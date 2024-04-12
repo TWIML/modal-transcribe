@@ -34,8 +34,8 @@
 6. Any speed ups as above point 9.
 *. **You removed the background jobs to enable processes to run in the bgd, you need to put that back**
 
-fetch('api/transcribe/623') ---------------------HICCOUGH XXXX-----------> DONE
-fetch('api/transcribe/623') -> TRIGGER A JOB, THEN JOB HAPPENS ASYNC ----> BGD
+fetch('api/transcribe/623') ---------------------HICCOUGH THEN FAIL OR IF NO HICCOUGH THEN-----------> DONE
+fetch('api/transcribe/623') -> TRIGGER A JOB, THEN JOB HAPPENS ASYNC REGARDLESS OF INTERRUPTIONS ----> BGD
 
 -----------
 
